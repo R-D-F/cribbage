@@ -57,17 +57,28 @@ def print_hand(hand):
         print_card(c.rank, c.suit)
 
 
+def print_hand_simplified(hand):
+    to_print = ""
+    for c in hand:
+        to_print += f"{c.suit}/{c.rank}  "
+
+    print(to_print)
+
+
 def score_hand(hand: list[Card], discard: list[Card]):
     max_score = 0
     best_hand = []
     deck = [Card(rank, suit) for rank in ranks for suit in suits]
     deck_without_hand = [card for card in deck if card not in hand]
     hand = list(hand)
-    print(hand)
+
     for card in deck_without_hand:
+        current_hand = []
+        current_hand.extend(hand)
         score = 0
-        hand.append(card)
-        print
+        current_hand.append(card)
+        # print_hand_simplified(current_hand)
+
         for two_card_combo in combinations(hand, 2):
             if two_card_combo[0].value + two_card_combo[1].value == 15:
                 score += 2
@@ -91,15 +102,15 @@ def find_best_hand(hand: list[Card]) -> list[Card]:
         for card in hand:
             if card not in combo:
                 discard.append(card)
-        # print("#################HAND##############")
-        # for card in combo:
-        #     print_card(card.value, card.suit)
-        # print("#################DISCARD##############")
-        # for card in discard:
-        #     print_card(card.value, card.suit)
-        hand_score = score_hand(combo, discard)
-        print(hand_score)
+
+        (
+            best_hand,
+            hand_score,
+        ) = score_hand(combo, discard)
+
         discard_score = score_discard(combo, discard)
+        print_hand_simplified(best_hand)
+        print(hand_score)
 
 
 suits = ("♠", "♥", "♦", "♣")
@@ -127,5 +138,5 @@ hand_a = dealt_pool[0:11:2]
 hand_b = dealt_pool[1:12:2]
 cut = dealt_pool[12]
 
-
+print_hand_simplified(hand_a)
 find_best_hand(hand_a)
