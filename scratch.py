@@ -16,6 +16,7 @@ def runs(hand):
     return score
 
 
+# Runs logic works, need to change value for face cards so that it makes sense with how runs needs to be calculated
 hand = [1, 2, 3, 2, 5]
 
 print(runs(hand))
