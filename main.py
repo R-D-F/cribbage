@@ -53,6 +53,37 @@ def equals_15(cards: list[Card]):
         return False
 
 
+def fifteens(hand):
+    score = 0
+    for two_card_combo in combinations(hand, 2):
+        if equals_15(two_card_combo):
+            score += 2
+    for three_card_combo in combinations(hand, 3):
+        if equals_15(three_card_combo):
+            score += 2
+    for four_card_combo in combinations(hand, 4):
+        if equals_15(four_card_combo):
+            score += 2
+    for five_card_combo in combinations(hand, 5):
+        if equals_15(five_card_combo):
+            score += 2
+    return score
+
+
+def pairs(hand):
+    score = 0
+    for combo in combinations(hand, 2):
+        if combo[0].value == combo[1].value:
+            score += 2
+    return score
+
+
+def runs(hand):
+    score = 0
+    hand_values = [card.value for card in hand]
+    sorted_hand = sorted(hand_values)
+
+
 def score_hand(hand: list[Card], discard: list[Card]):
     max_score = 0
     best_hand = []
@@ -68,18 +99,9 @@ def score_hand(hand: list[Card], discard: list[Card]):
         current_hand.append(card)
         # print_hand_simplified(current_hand)
 
-        for two_card_combo in combinations(current_hand, 2):
-            if equals_15(two_card_combo):
-                score += 2
-        for three_card_combo in combinations(current_hand, 3):
-            if equals_15(three_card_combo):
-                score += 2
-        for four_card_combo in combinations(current_hand, 4):
-            if equals_15(four_card_combo):
-                score += 2
-        for five_card_combo in combinations(current_hand, 5):
-            if equals_15(five_card_combo):
-                score += 2
+        score += fifteens(current_hand)
+        score += pairs(current_hand)
+
         if score > max_score:
             max_score = score
             best_hand = current_hand
