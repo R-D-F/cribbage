@@ -1,46 +1,45 @@
-from itertools import combinations
+x = [
+    0,
+    1,
+    4,
+    6,
+    3,
+    5,
+]
 
 
-def is_sequential(cards):
-    return all(cards[i] + 1 == cards[i + 1] for i in range(len(cards) - 1))
+def bub_sort(x: list):
+    finished = False
+    while not finished:
+        finished = True
+        for e in range(len(x) - 1):
+            if x[e] > x[e + 1]:
+                x[e], x[e + 1] = x[e + 1], x[e]
+                finished = False
+
+    return x
 
 
-def runs(hand):
-    score = 0
-    for i in range(5, 2, -1):
-        for combo in combinations(hand, i):
-            combo = sorted(combo)
-            if is_sequential(combo):
-                score += len(combo)
-
-    return score
-
-
-# Runs logic works, need to change value for face cards so that it makes sense with how runs needs to be calculated
-hand = [1, 2, 3, 2, 5]
-
-print(runs(hand))
+def bubble_sort(values: list[int]) -> list[int]:
+    n = len(values)
+    for i in range(n):
+        swapped = False
+        for j in range(0, n - i - 1):
+            if values[j] > values[j + 1]:
+                values[j], values[j + 1] = values[j + 1], values[j]
+                swapped = True
+        if not swapped:
+            break
+    return values
 
 
-def checkRuns(hand, verbose):
-    pips = 0
-    hand.sort(key=lambda card: card.rank.value)
-    # check for runs starting with 5
-    for i in range(5, 2, -1):
-        runFound = False
-        for combination in combinations(hand, i):
-            if all(
-                [
-                    x.rank.value - y.rank.value == 1
-                    for x, y in zip(combination[1:], combination[:-1])
-                ]
-            ):
-                if verbose:
-                    print("\tRun for " + str(i) + "! " + cardsString(combination))
-                pips += i
-                runFound = True
+def bad_sort(n):
+    for i in range(len(n)):
+        for j in range(len(n)):
+            if n[i] < n[j]:
+                n[i], n[j] = n[j], n[i]
 
-        if runFound:
-            return pips
+    return n
 
-    return pips
+
+print(bad_sort(x))
