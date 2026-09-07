@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from itertools import combinations
 
+import pandas as pd
+
 from ascii_cards import print_card
 
 rank_to_number = {
@@ -98,15 +100,17 @@ def is_sequential(cards):
 
 
 def runs(hand):
-    score = 0
-    for i in range(5, 2, -1):
-        for combo in combinations(hand, i):
-            combo = [rank_to_number[card.rank] for card in combo]
-            combo = sorted(combo)
-            if is_sequential(combo):
-                score += len(combo)
-
-    return score
+    # In cribbage, only the longest run length scores,
+    # but duplicates can create multiple runs of that same length.
+    for run_len in range(5, 2, -1):  # 5, 4, 3
+        run_count = 0
+        for combo in combinations(hand, run_len):
+            ranks_sorted = sorted(rank_to_number[card.rank] for card in combo)
+            if is_sequential(ranks_sorted):
+                run_count += 1
+        if run_count > 0:
+            return run_count * run_len
+    return 0
 
 
 def hand_flush(hand, starter_card):
@@ -158,14 +162,16 @@ def score_hand(hand: list[Card], discard: list[Card]):
         current_hand.extend(hand)
         score = 0
 
-        score += hand_flush(current_hand, starter_card)
-        score += knobs(current_hand, starter_card)
+        flush_score = hand_flush(current_hand, starter_card)
+        knobs_score = knobs(current_hand, starter_card)
         # print_hand_simplified(current_hand)
         current_hand.append(starter_card)
-        score += fifteens(current_hand)
-        score += pairs(current_hand)
-        score += runs(current_hand)
+        fifteens_score = fifteens(current_hand)
+        pairs_score = pairs(current_hand)
+        runs_score = runs(current_hand)
 
+        for score_type in [flush_score, knobs_score, fifteens_score, pairs_score, runs_score]:
+            score += score_type
         if score > max_score:
             max_score = score
             best_hand = current_hand
@@ -188,15 +194,12 @@ def score_hand(hand: list[Card], discard: list[Card]):
     return best_hand, max_score, average, crib_average
 
 
-def score_discard(hand: list[Card], discard: list[Card]):
-    deck = [Card(rank, suit) for rank in ranks for suit in suits]
-    pass
-
-
-def find_best_hand(hand: list[Card]) -> list[Card]:
+def rank_hands(hand: list[Card]) -> list[Card]:
 
     best_average_hand = 0
     best_possible_hand = []
+    hand_table = {"HAND": [], "DISCARD": [], "MAX": [], "MIN": [], "AVERAGE": []}
+
     for combo in combinations(hand, 4):
         discard = []
 
@@ -204,16 +207,19 @@ def find_best_hand(hand: list[Card]) -> list[Card]:
             if card not in combo:
                 discard.append(card)
 
-        (best_hand, hand_score, average, crib_average) = score_hand(combo, discard)
+        (
+            best_hand,
+            hand_score,
+            average,
+            crib_average,
+        ) = score_hand(combo, discard)
+        hand_table["HAND"].append(combo)
+        hand_table["DISCARD"].append(discard)
+        hand_table["MAX"].append("N/A")
+        hand_table["MIN"].append("N/A")
+        hand_table["AVERAGE"].append(average)
 
-        discard_score = score_discard(combo, discard)
-        # print_hand_simplified(best_hand)
-        # print(f"hand_score = {hand_score}")
-        # print(f"Average = {average}")
-        if average + crib_average > best_average_hand:
-            best_average_hand = average
-            best_possible_hand = combo
-    return best_possible_hand, best_average_hand, crib_average
+    return pd.DataFrame(hand_table)
 
 
 suits = ("♠", "♥", "♦", "♣")
@@ -249,7 +255,5 @@ hand_a = [
     Card("J", "♠"),
 ]
 print_hand_simplified(hand_a)
-best_possible_hand, best_average_hand, crib_average = find_best_hand(hand_a)
-print_hand_simplified(best_possible_hand)
-print(best_average_hand)
-print(crib_average)
+hand_table = rank_hands(hand_a)
+print(hand_table)
