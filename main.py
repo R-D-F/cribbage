@@ -52,6 +52,14 @@ def print_hand(hand):
         print_card(c.rank, c.suit)
 
 
+def get_hand_simplified(hand):
+    to_print = ""
+    for c in hand:
+        to_print += f"{c.suit}/{c.rank}  "
+
+    return to_print
+
+
 def print_hand_simplified(hand):
     to_print = ""
     for c in hand:
@@ -177,35 +185,47 @@ def score_hand(hand: list[Card], discard: list[Card]):
             max_score = score
             best_hand = current_hand
         average += score
-    average = average / len(deck_without_hand)
 
-    deck_without_hand_or_starter_card = [card for card in deck if card != starter_card]
-    for two_card_combo in combinations(deck_without_hand_or_starter_card, 2):
-        crib = (*two_card_combo, *discard)
-        crib_score = 0
-        crib_score += crib_flush((*crib, starter_card))
-        crib_score += knobs(crib, starter_card)
-        crib_score += fifteens((*crib, starter_card))
-        crib_score += pairs((*crib, starter_card))
-        crib_score += runs((*crib, starter_card))
-        crib_counter += 1
-        crib_average += crib_score
+        deck_without_hand_or_starter_card = [
+            card for card in deck_without_hand if card != starter_card
+        ]
+        for two_card_combo in combinations(deck_without_hand_or_starter_card, 2):
+            crib = (*two_card_combo, *discard)
+            crib_score = 0
+            crib_flush_score = crib_flush((*crib, starter_card))
+            crib_knobs = knobs(crib, starter_card)
+            crib_fifteens = fifteens((*crib, starter_card))
+            crib_pairs = pairs((*crib, starter_card))
+            crib_runs = runs((*crib, starter_card))
+            for crib_score_type in [
+                crib_flush_score,
+                crib_knobs,
+                crib_fifteens,
+                crib_pairs,
+                crib_runs,
+            ]:
+                crib_score += crib_score_type
+
+            crib_counter += 1
+            crib_average += crib_score
+    average = average / len(deck_without_hand)
     crib_average = crib_average / crib_counter
 
     return best_hand, max_score, average, crib_average
 
 
-def rank_hands(hand: list[Card]) -> list[Card]:
+def rank_hands(hand: list[Card], dealer: bool) -> list[Card]:
 
     best_average_hand = 0
     best_possible_hand = []
     hand_table = {
         "HAND": [],
         "DISCARD": [],
-        "MAX": [],
-        "MIN": [],
-        "AVERAGE": [],
+        # "MAX": [],
+        # "MIN": [],
+        "HAND AVERAGE": [],
         "CRIB AVERAGE": [],
+        "AVERAGE": [],
     }
 
     for combo in combinations(hand, 4):
@@ -224,12 +244,17 @@ def rank_hands(hand: list[Card]) -> list[Card]:
             average,
             crib_average,
         ) = score_hand(combo, discard)
-        hand_table["HAND"].append(combo)
-        hand_table["DISCARD"].append(discard)
-        hand_table["MAX"].append("N/A")
-        hand_table["MIN"].append("N/A")
-        hand_table["AVERAGE"].append(average)
+        hand_table["HAND"].append(get_hand_simplified(combo))
+        hand_table["DISCARD"].append(get_hand_simplified(discard))
+        # hand_table["MAX"].append("N/A")
+        # hand_table["MIN"].append("N/A")
+        hand_table["HAND AVERAGE"].append(average)
         hand_table["CRIB AVERAGE"].append(crib_average)
+        if dealer:
+            hand_table["AVERAGE"].append(average + crib_average)
+        else:
+            hand_table["AVERAGE"].append(average - crib_average)
+
     df = pd.DataFrame(hand_table)
     df = df.sort_values(by="AVERAGE", ignore_index=True, ascending=False)
     return df
@@ -268,8 +293,8 @@ hand_a = [
     Card("J", "♠"),
 ]
 print_hand_simplified(hand_a)
-hand_table = rank_hands(hand_a)
+hand_table = rank_hands(hand_a, True)
 
 print("BEST HAND:")
-print_hand_simplified(hand_table.at[0, "HAND"])
+hand_table.at[0, "HAND"]
 print(hand_table)
