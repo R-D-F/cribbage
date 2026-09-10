@@ -90,7 +90,7 @@ def fifteens(hand):
 def pairs(hand):
     score = 0
     for combo in combinations(hand, 2):
-        if combo[0].value == combo[1].value:
+        if combo[0].rank == combo[1].rank:
             score += 2
     return score
 
@@ -121,7 +121,7 @@ def hand_flush(hand, starter_card):
     set_suits = set(suits)
     if len(set_suits) == 1:
         score += 4
-        if starter_card in set_suits:
+        if starter_card.suit in set_suits:
             score += 1
     return score
 
@@ -153,6 +153,7 @@ def score_hand(hand: list[Card], discard: list[Card]):
     best_hand = []
     deck = [Card(rank, suit) for rank in ranks for suit in suits]
     deck_without_hand = [card for card in deck if card not in (*hand, *discard)]
+    # deck_without_hand = [Card("K", "♠")]
     hand = list(hand)
     average = 0
     crib_average = 0
@@ -198,7 +199,14 @@ def rank_hands(hand: list[Card]) -> list[Card]:
 
     best_average_hand = 0
     best_possible_hand = []
-    hand_table = {"HAND": [], "DISCARD": [], "MAX": [], "MIN": [], "AVERAGE": []}
+    hand_table = {
+        "HAND": [],
+        "DISCARD": [],
+        "MAX": [],
+        "MIN": [],
+        "AVERAGE": [],
+        "CRIB AVERAGE": [],
+    }
 
     for combo in combinations(hand, 4):
         discard = []
@@ -206,6 +214,9 @@ def rank_hands(hand: list[Card]) -> list[Card]:
         for card in hand:
             if card not in combo:
                 discard.append(card)
+
+        if discard == [Card(rank="A", suit="♠"), Card(rank="2", suit="♠")]:
+            print_hand_simplified(combo)
 
         (
             best_hand,
@@ -218,8 +229,10 @@ def rank_hands(hand: list[Card]) -> list[Card]:
         hand_table["MAX"].append("N/A")
         hand_table["MIN"].append("N/A")
         hand_table["AVERAGE"].append(average)
-
-    return pd.DataFrame(hand_table)
+        hand_table["CRIB AVERAGE"].append(crib_average)
+    df = pd.DataFrame(hand_table)
+    df = df.sort_values(by="AVERAGE", ignore_index=True, ascending=False)
+    return df
 
 
 suits = ("♠", "♥", "♦", "♣")
@@ -256,4 +269,7 @@ hand_a = [
 ]
 print_hand_simplified(hand_a)
 hand_table = rank_hands(hand_a)
+
+print("BEST HAND:")
+print_hand_simplified(hand_table.at[0, "HAND"])
 print(hand_table)
